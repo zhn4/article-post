@@ -1,0 +1,15 @@
+<%- include('./template/header') %>
+
+<div class="main">
+  <div class="title">
+    <%= data.title %>
+  </div>
+  <div class="time">
+    <%= moment(data.create_time).format('ll') %>
+  </div>
+  <div class="contnet">
+    <%= data.content %>
+  </div>
+</div>
+
+<%- include('./template/footer') %>

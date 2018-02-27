@@ -1,0 +1,191 @@
+<%- include('../template/header') %>
+
+<div class="dashboard">
+  <div class="article-part">
+    <ul id="box">
+      <%# <li>
+        <div class="focus">
+        </div>
+        <div class="title">
+          标题
+        </div>
+        <div class="time">
+          时间
+        </div>
+      </li>%>
+    </ul>
+    <button type="button" id="load-btn">加载更多</button>
+  </div>
+
+  <div class="edit-part">
+    <%# <div class="search">
+      <input type="text" placeholder="搜索关键字" id="search-box">
+    </div>%>
+    <div class="new-btn" id="new-btn">
+      新文章
+    </div>
+    <form class="article" action="" method="post">
+      <div>
+        <input type="text" name="title" placeholder="标题" id="article-title">
+      </div>
+      <div>
+        <textarea name="content" placeholder="文章内容" id="article-content"></textarea>
+      </div>
+      <input type="submit" value="修改" id="edit-btn">
+      <div class="delete-btn" id="delete-btn" data-id="">删除</div>
+    </form>
+  </div>
+</div>
+
+<div class="new-part" style="display: none;">
+  <form class="article" action="/post" method="post">
+    <div>
+      <input type="text" name="title" placeholder="标题">
+    </div>
+    <div>
+      <textarea name="content" placeholder="文章内容"></textarea>
+    </div>
+    <div class="close-btn" id="close-btn">
+      关闭
+    </div>
+    <input type="submit" value="发布">
+  </form>
+</div>
+
+<script type="text/javascript">
+  var box = document.getElementById('box'),
+      page = 1
+  // fetch('http://localhost:3000/api/v1/article/' + page)
+  fetch('http://localhost:3000/api/v1/article/' + page)// 获取文章列表
+    .then(function(res) {
+      return res.json()
+    }).then(function(json) {
+      console.log(json)
+      for(var i = 0; i < json.data.length; i++) {
+        var date = new Date(json.data[i].create_time),
+            year = date.getFullYear(),
+            month = date.getMonth() + 1,
+            day = date.getDate()
+        var string = '<li><div class="focus" data-id="' + json.data[i].id + '"></div><div class="title">' + json.data[i].title + '</div><div class="time">' + year + '-' +  month + '-' + day + '</div></li>'
+        box.insertAdjacentHTML('beforeend', string)
+      }
+      page ++
+    })
+
+    document.getElementById('load-btn').addEventListener('click', function(e) {
+      // fetch('http://localhost:3000/api/v1/article/' + page)
+      fetch('http://localhost:3000/api/v1/article/' + page)// 加载更多文章
+        .then(function(res) {
+          return res.json()
+        }).then(function(json) {
+          console.log(json)
+          if(json.data.length > 0) {
+            for(var i = 0; i < json.data.length; i++) {
+              var date = new Date(json.data[i].create_time),
+                  year = date.getFullYear(),
+                  month = date.getMonth() + 1,
+                  day = date.getDate()
+              var string = '<li><div class="focus" data-id="' + json.data[i].id + '"></div><div class="title">' + json.data[i].title + '</div><div class="time">' + year + '-' +  month + '-' + day + '</div></li>'
+              box.insertAdjacentHTML('beforeend', string)
+            }
+            page ++
+          }else {
+            e.target.style.display = 'none'
+            alert('加载完毕')
+          }
+        })
+    })
+
+    document.getElementById('box').addEventListener('click', function(e) {// 点击文章加载数据编辑
+      // console.log(e.target.dataset.id)
+      // fetch('http://192.168.1.244:3000/api/v1/article/edit/' + parseInt(e.target.dataset.id))
+      fetch('http://localhost:3000/api/v1/article/edit/' + parseInt(e.target.dataset.id))
+        .then(function(res) {
+          return res.json()
+        }).then(function(json) {
+          console.log(json)
+          document.getElementById('article-title').value = json.data[0].title
+          document.getElementById('article-content').value = json.data[0].content
+          document.getElementById('edit-btn').dataset.id = json.data[0].id
+          document.getElementById('delete-btn').dataset.id = json.data[0].id
+        })
+    })
+
+    document.getElementById('edit-btn').addEventListener('click', function(e) {// 提交修改
+      e.preventDefault()
+      // fetch('http://192.168.1.244:3000/api/v1/article/edit', {
+      fetch('http://localhost:3000/api/v1/article/edit', {
+        method: 'post',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          id: document.getElementById('edit-btn').dataset.id,
+          title: document.getElementById('article-title').value,
+          content: document.getElementById('article-content').value,
+        })
+      })
+      .then(function(res) {
+        return res.json()
+      }).then(function(json) {
+        alert(json.msg)
+        location.reload()
+      })
+    })
+    
+    document.getElementById('delete-btn').addEventListener('click', function(e) {
+      // fetch('http://192.168.1.244:3000/api/v1/article/delete/' + parseInt(e.target.dataset.id))
+      fetch('http://localhost:3000/api/v1/article/delete/' + parseInt(e.target.dataset.id))
+        .then(function(res) {
+          return res.json()
+        }).then(function(json) {
+          // console.log(json)
+          alert(json.msg)
+          location.reload()
+        })
+    })
+
+    var new_part = document.getElementsByClassName('new-part')[0]
+    document.getElementById('new-btn').addEventListener('click', function() {// 打开新文章编辑页面
+      if(new_part.style.display === 'none') {
+        new_part.style.display = 'block'
+      }else {
+        new_part.style.display = 'none'
+      }
+    })
+
+    document.getElementById('close-btn').addEventListener('click', function() {// 关闭新文章编辑页面
+      new_part.style.display = 'none'
+    })
+
+    // document.getElementById('search-box').addEventListener('keyup', function(e) {
+    //   if(e.which === 13) {
+    //     // console.log('搜索')
+    //     // console.log(e.target.value)
+    //     fetch('http://192.168.1.244:3000/api/v1/search/' + encodeURIComponent(e.target.value))
+    //       .then(function(res) {
+    //         return res.json()
+    //       }).then(function(json) {
+    //         console.log(json)
+    //         if(json.data.length > 0) {
+    //           for(var i = 0; i < json.data.length; i++) {
+    //             var date = new Date(json.data[i].create_time),
+    //                 year = date.getFullYear(),
+    //                 month = date.getMonth() + 1,
+    //                 day = date.getDate()
+    //             var string = '<li><div class="focus" data-id="' + json.data[i].id + '"></div><div class="title">' + json.data[i].title + '</div><div class="time">' + year + '-' +  month + '-' + day + '</div></li>'
+    //             // box.insertAdjacentHTML('beforeend', string)
+    //             box.innerHTML = string
+    //             document.getElementById('load-btn').style.display = 'none'
+    //           }
+    //           page ++
+    //         }
+    //       })
+    //   }
+    // })
+
+</script>
+
+<link rel='stylesheet' href='/stylesheets/dashboard.css' />
+
+<%- include('../template/footer') %>
